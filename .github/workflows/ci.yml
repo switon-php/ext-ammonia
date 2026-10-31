@@ -42,7 +42,7 @@ jobs:
           - { os: windows-latest, php: "8.5", ts: nts }
           - { os: windows-latest, php: "8.5", ts: zts }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/test
         with:
           php: ${{ matrix.php }}
