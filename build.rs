@@ -27,10 +27,8 @@ fn extension_version(root: &Path) -> String {
     if let Some(tag) = git(root, &["describe", "--tags", "--exact-match"]) {
         return strip_tag(&tag);
     }
-    if let Some(described) = git(root, &["describe", "--tags", "--always"]) {
-        if described.contains('.') {
-            return strip_tag(&described);
-        }
+    if let Some(described) = git(root, &["describe", "--tags"]) {
+        return drop_commit(&strip_tag(&described));
     }
     std::env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "0.0.0".to_string())
 }
@@ -59,4 +57,24 @@ fn strip_tag(tag: &str) -> String {
         .filter(|rest| rest.starts_with(|c: char| c.is_ascii_digit()))
         .unwrap_or(tag)
         .to_string()
+}
+
+/// `1.0.0-3-gabcdef` becomes `1.0.0-3`. The abbreviated commit is not part of the version.
+fn drop_commit(described: &str) -> String {
+    let Some((head, abbrev)) = described.rsplit_once('-') else {
+        return described.to_string();
+    };
+    let Some(hex) = abbrev.strip_prefix('g') else {
+        return described.to_string();
+    };
+    if hex.is_empty() || !hex.chars().all(|c| c.is_ascii_hexdigit()) {
+        return described.to_string();
+    }
+    let Some((tag, distance)) = head.rsplit_once('-') else {
+        return described.to_string();
+    };
+    if distance.is_empty() || !distance.chars().all(|c| c.is_ascii_digit()) {
+        return described.to_string();
+    }
+    format!("{tag}-{distance}")
 }
