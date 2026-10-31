@@ -31,7 +31,7 @@ dependencies = [
 
 [[package]]
 name = "ammonia"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "ammonia 4.2.4",
  "ext-php-rs",
