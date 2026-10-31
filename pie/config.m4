@@ -9,5 +9,6 @@ if test "$PHP_AMMONIA" != "no"; then
     AC_MSG_ERROR([cargo is required to build ammonia])
   fi
   PHP_SUBST([CARGO])
-  PHP_ADD_MAKEFILE_FRAGMENT
+  dnl No C sources, so ext_srcdir is unset. Pass the fragment path directly.
+  PHP_ADD_MAKEFILE_FRAGMENT([Makefile.frag], [.], [.])
 fi
