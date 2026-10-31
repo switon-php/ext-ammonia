@@ -1,0 +1,111 @@
+name: Build and test
+description: Install one PHP build, compile the extension, and run make test.
+inputs:
+  php:
+    description: PHP minor version, such as 8.4
+    required: true
+  ts:
+    description: nts or zts
+    required: true
+  upload:
+    description: Upload the release library when true
+    required: false
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: Install libclang
+      if: runner.os == 'Linux'
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y libclang-dev
+
+    - name: Install Windows build tools
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        set -euo pipefail
+        choco install llvm make -y --no-progress
+        echo "LIBCLANG_PATH=C:\\Program Files\\LLVM\\bin" >> "$GITHUB_ENV"
+
+    - name: Install PHP ${{ inputs.php }} ${{ inputs.ts }}
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ inputs.php }}
+        coverage: none
+      env:
+        phpts: ${{ inputs.ts }}
+
+    - name: Install Rust
+      if: runner.os != 'Windows'
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install Rust nightly
+      if: runner.os == 'Windows'
+      uses: dtolnay/rust-toolchain@nightly
+      with:
+        components: rustfmt
+
+    - name: Cache Rust
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: php${{ inputs.php }}-${{ inputs.ts }}-${{ runner.os }}-${{ runner.arch }}
+
+    - name: Test
+      shell: bash
+      env:
+        EXPECTED_PHP: ${{ inputs.php }}
+        EXPECTED_TS: ${{ inputs.ts }}
+        UPLOAD: ${{ inputs.upload }}
+        CARGO_TERM_COLOR: always
+      run: |
+        set -euo pipefail
+        ver=$(php -r 'echo PHP_MAJOR_VERSION, ".", PHP_MINOR_VERSION;')
+        ts=$(php -r 'echo PHP_ZTS ? "zts" : "nts";')
+        echo "PHP $ver $ts"
+        php -v
+        if [ "$ver" != "$EXPECTED_PHP" ] || [ "$ts" != "$EXPECTED_TS" ]; then
+          echo "expected PHP ${EXPECTED_PHP} ${EXPECTED_TS}, got ${ver} ${ts}" >&2
+          exit 1
+        fi
+        make test
+        case "$(uname -s)" in
+          Linux) lib=target/release/libammonia.so ;;
+          Darwin) lib=target/release/libammonia.dylib ;;
+          MINGW*|MSYS*|CYGWIN*) lib=target/release/ammonia.dll ;;
+          *)
+            echo "unsupported OS $(uname -s)" >&2
+            exit 1
+            ;;
+        esac
+        bash "$GITHUB_ACTION_PATH/check-linkage.sh" "$lib"
+        if [ "$UPLOAD" != "true" ]; then
+          exit 0
+        fi
+        case "$(uname -m)" in
+          x86_64|amd64|AMD64) arch=x64 ;;
+          aarch64|arm64) arch=arm64 ;;
+          *)
+            echo "unsupported CPU $(uname -m)" >&2
+            exit 1
+            ;;
+        esac
+        case "$(uname -s)" in
+          Linux) platform=linux ;;
+          Darwin) platform=macos ;;
+          MINGW*|MSYS*|CYGWIN*) platform=windows ;;
+        esac
+        name=$(basename "$lib")
+        rm -rf dist
+        mkdir -p dist/pkg
+        cp "$lib" "dist/pkg/$name"
+        pkg_ver=$(awk -F '"' '/^version = / { print $2; exit }' Cargo.toml)
+        tar -C dist/pkg -czf "dist/ammonia-${pkg_ver}-php${ver}-${ts}-${platform}-${arch}.tar.gz" "$name"
+        rm -rf dist/pkg
+
+    - name: Upload library
+      if: inputs.upload == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ammonia-${{ inputs.php }}-${{ inputs.ts }}-${{ runner.os }}-${{ runner.arch }}
+        path: dist/*
+        if-no-files-found: error
