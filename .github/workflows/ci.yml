@@ -21,26 +21,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # glibc x86_64: every supported PHP, NTS and ZTS
-          - { os: ubuntu-24.04, php: "8.2", ts: nts }
-          - { os: ubuntu-24.04, php: "8.2", ts: zts }
-          - { os: ubuntu-24.04, php: "8.3", ts: nts }
-          - { os: ubuntu-24.04, php: "8.3", ts: zts }
-          - { os: ubuntu-24.04, php: "8.4", ts: nts }
-          - { os: ubuntu-24.04, php: "8.4", ts: zts }
+          # Smoke on main and pull requests. The full PHP matrix is release.yml.
           - { os: ubuntu-24.04, php: "8.5", ts: nts }
-          - { os: ubuntu-24.04, php: "8.5", ts: zts }
-          # glibc arm64 and macOS Apple Silicon: ends of the PHP line, plus one ZTS
-          - { os: ubuntu-24.04-arm, php: "8.3", ts: nts }
           - { os: ubuntu-24.04-arm, php: "8.5", ts: nts }
-          - { os: ubuntu-24.04-arm, php: "8.5", ts: zts }
-          - { os: macos-15, php: "8.3", ts: nts }
           - { os: macos-15, php: "8.5", ts: nts }
-          - { os: macos-15, php: "8.5", ts: zts }
-          # Windows x64: one VS16 PHP, one VS17 PHP, plus one ZTS
-          - { os: windows-latest, php: "8.3", ts: nts }
           - { os: windows-latest, php: "8.5", ts: nts }
-          - { os: windows-latest, php: "8.5", ts: zts }
     steps:
       - uses: actions/checkout@v7
         with:

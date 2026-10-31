@@ -146,13 +146,6 @@ extension=/path/libammonia.so
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs `make test` on every push and pull request.
-
-| Runner | What it covers |
-| --- | --- |
-| `ubuntu-24.04` | PHP 8.2–8.5, NTS and ZTS, glibc `x86_64` |
-| `ubuntu-24.04-arm` | PHP 8.3 and 8.5 NTS, PHP 8.5 ZTS, glibc `arm64` |
-| `macos-15` | PHP 8.3 and 8.5 NTS, PHP 8.5 ZTS, Apple Silicon |
-| `windows-latest` | PHP 8.3 and 8.5 NTS, PHP 8.5 ZTS, x64 |
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs `make test` on every push and pull request: PHP 8.5 NTS on each runner.
 
 A `v*` tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml). That build is the full set: PHP 8.2–8.5, NTS and ZTS, on all four runners. Each archive contains one library, and CI rejects a build that links a second project library. `make bench` is not part of CI.
