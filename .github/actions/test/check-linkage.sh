@@ -21,7 +21,14 @@ elif [[ "$os" == MINGW* || "$os" == MSYS* || "$os" == CYGWIN* ]]; then
     echo "vswhere not found; cannot list DLL imports of $file" >&2
     exit 1
   fi
-  dumpbin=$("$vswhere" -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find 'VC\Tools\MSVC\**\bin\Hostx64\x64\dumpbin.exe' | head -n 1)
+  # sed reads the whole list. head would close the pipe early, and
+  # Git Bash then reports vswhere's SIGPIPE as exit 157 under pipefail.
+  dumpbin=$(
+    "$vswhere" -latest -products '*' \
+      -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 \
+      -find 'VC\Tools\MSVC\**\bin\Hostx64\x64\dumpbin.exe' \
+      | sed -n '1p'
+  )
   if [[ -z "$dumpbin" || ! -f "$dumpbin" ]]; then
     echo "dumpbin not found; cannot list DLL imports of $file" >&2
     exit 1
