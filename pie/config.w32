@@ -1,0 +1,5 @@
+ARG_ENABLE("ammonia", "enable ammonia", "no");
+
+if (PHP_AMMONIA != "no") {
+	ERROR("Install the prebuilt ammonia DLL. PIE does not compile this extension on Windows.");
+}

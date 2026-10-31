@@ -2,6 +2,10 @@
 
 PHP extension. `Switon\Ammonia\Builder` sanitizes HTML with ammonia 4.2.4. Supported platforms are macOS Apple Silicon, Linux glibc (`x86_64` and `arm64`), and Windows x64, PHP 8.2–8.5, NTS and ZTS. Contributor conventions are in [AGENTS.md](AGENTS.md).
 
+## Install
+
+`pie install switon/ammonia`. PIE takes a prebuilt file from the GitHub release when the PHP version matches, and compiles with Rust otherwise. A source build needs the toolchain in the build section below.
+
 ## Ammonia
 
 [Ammonia](https://github.com/rust-ammonia/ammonia) is a whitelist HTML sanitizer written in Rust. It parses a fragment with [html5ever](https://github.com/servo/html5ever), the HTML5 parser, walks that tree, and keeps only tags, attributes, and URL schemes the policy allows. The result is still HTML. It does not insert paragraphs for newlines or turn bare URLs into links, so a markup processor runs first when the source is Markdown.

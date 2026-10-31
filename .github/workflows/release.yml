@@ -41,13 +41,13 @@ jobs:
           merge-multiple: true
       - name: Checksums
         working-directory: dist
-        run: sha256sum ammonia-*.tar.gz | tee SHA256SUMS
+        run: sha256sum ammonia-*.tar.gz php_ammonia-*.zip | tee SHA256SUMS
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           append_body: true
           body: |
-            Download `ammonia-<version>-php<php>-<nts|zts>-<linux|macos|windows>-<x64|arm64>.tar.gz` for this machine. Unpack it. The only file inside is `libammonia.so` on Linux, `libammonia.dylib` on macOS, or `ammonia.dll` on Windows. `php --ri ammonia` reports the version.
+            `pie install switon/ammonia` uses the `php_ammonia-*.zip` assets. A manual download is `ammonia-<version>-php<php>-<nts|zts>-<linux|macos|windows>-<x64|arm64>.tar.gz`. Unpack it. The only file inside is `libammonia.so` on Linux, `libammonia.dylib` on macOS, or `ammonia.dll` on Windows. `php --ri ammonia` reports the version.
 
             ```ini
             extension=/path/libammonia.so
@@ -56,4 +56,5 @@ jobs:
             On Windows the line is `extension=C:/path/ammonia.dll`. `extension=ammonia` loads `ammonia.so` on Linux and macOS, and `php_ammonia.dll` on Windows. It does not load `libammonia.so` or `ammonia.dll`. Linux builds are Ubuntu 24.04 glibc. Windows builds are x64.
           files: |
             dist/ammonia-*.tar.gz
+            dist/php_ammonia-*.zip
             dist/SHA256SUMS
