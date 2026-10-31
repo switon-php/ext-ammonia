@@ -132,7 +132,7 @@ make test
 
 Put the chosen PHP minor, NTS or ZTS, on `PATH` as `/c/php`. The machine also needs the Visual C++ Redistributable listed for that PHP build. `ammonia.dll` links `php8.dll` or `php8ts.dll` and that runtime. It does not ship a second project library.
 
-The extension version is `1.0.0`. A release asset is `ammonia-1.0.0-php8.3-nts-linux-x64.tar.gz`: our version, the PHP minor, `nts` or `zts`, `linux`, `macos`, or `windows`, `x64` or `arm64`. Unpack it. The only file inside is `libammonia.so` on Linux, `libammonia.dylib` on macOS, or `ammonia.dll` on Windows. `php --ri ammonia` reports `1.0.0`. Load the file:
+The extension version comes from the git tag. A tag `v1.0.0` builds version `1.0.0`, and `php --ri ammonia` reports that. A commit after the tag is `1.0.0` plus the distance and commit, such as `1.0.0-3-gabcdef`. With no tag in the clone, the build uses the `version` in `Cargo.toml`. A release asset is `ammonia-1.0.0-php8.3-nts-linux-x64.tar.gz`: that version, the PHP minor, `nts` or `zts`, `linux`, `macos`, or `windows`, `x64` or `arm64`. Unpack it. The only file inside is `libammonia.so` on Linux, `libammonia.dylib` on macOS, or `ammonia.dll` on Windows. Load the file:
 
 ```ini
 extension=/path/libammonia.so

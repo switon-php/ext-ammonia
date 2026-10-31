@@ -15,7 +15,7 @@ pub extern "C" fn module_info(_module: *mut ModuleEntry) {
     info_table_row!("Vendor", "Switon");
     info_table_row!("URL", "https://github.com/switon-php/ext-ammonia");
     info_table_row!("Summary", "Sanitizes untrusted HTML");
-    info_table_row!("Version", env!("CARGO_PKG_VERSION"));
+    info_table_row!("Version", env!("EXT_VERSION"));
     info_table_row!("Ammonia", "4.2.4");
     info_table_end!();
 }
@@ -23,6 +23,7 @@ pub extern "C" fn module_info(_module: *mut ModuleEntry) {
 #[php_module]
 pub fn module(module: ModuleBuilder) -> ModuleBuilder {
     module
+        .version(env!("EXT_VERSION"))
         .info_function(module_info)
         .class::<AmmoniaException>()
         .class::<UrlException>()

@@ -17,13 +17,18 @@ function check(bool $condition, string $message): void
 }
 
 check(class_exists(Builder::class), 'Switon\\Ammonia\\Builder is not loaded');
-check(phpversion('ammonia') === '1.0.0', 'module version is not 1.0.0');
+$version = phpversion('ammonia');
+check(
+    is_string($version) && preg_match('/^[0-9]+\.[0-9]+\.[0-9]+([\-+].*)?$/', $version) === 1,
+    'module version is not a semver from the git tag',
+);
 ob_start();
 phpinfo(INFO_MODULES);
 $info = ob_get_clean();
 check(str_contains($info, 'Switon'), 'module vendor is missing');
 check(str_contains($info, 'https://github.com/switon-php/ext-ammonia'), 'module URL is missing');
 check(str_contains($info, 'Sanitizes untrusted HTML'), 'module summary is missing');
+check(str_contains($info, $version), 'module info version does not match phpversion');
 check(str_contains($info, '4.2.4'), 'ammonia version is missing from module info');
 
 $clean = (new Builder())->clean('<b><img src="" onerror=alert(1)>ok</b><script>alert(1)</script>');

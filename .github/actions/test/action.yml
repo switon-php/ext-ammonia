@@ -98,7 +98,11 @@ runs:
         rm -rf dist
         mkdir -p dist/pkg
         cp "$lib" "dist/pkg/$name"
-        pkg_ver=$(awk -F '"' '/^version = / { print $2; exit }' Cargo.toml)
+        if [ ! -s target/ext-version ]; then
+          echo "target/ext-version is missing" >&2
+          exit 1
+        fi
+        pkg_ver=$(tr -d '[:space:]' < target/ext-version)
         tar -C dist/pkg -czf "dist/ammonia-${pkg_ver}-php${ver}-${ts}-${platform}-${arch}.tar.gz" "$name"
         rm -rf dist/pkg
 
