@@ -67,7 +67,14 @@ runs:
           echo "expected PHP ${EXPECTED_PHP} ${EXPECTED_TS}, got ${ver} ${ts}" >&2
           exit 1
         fi
+        set +e
         make test
+        test_status=$?
+        set -e
+        echo "make test exit ${test_status}"
+        if [[ "$test_status" -ne 0 ]]; then
+          exit "$test_status"
+        fi
         case "$(uname -s)" in
           Linux) lib=target/release/libammonia.so ;;
           Darwin) lib=target/release/libammonia.dylib ;;

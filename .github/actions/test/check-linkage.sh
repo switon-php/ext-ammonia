@@ -16,24 +16,35 @@ elif [[ "$os" == Linux ]]; then
   ')
   allowed='^(libc|libm|libgcc_s|libpthread|libdl|ld-linux|linux-vdso|libiconv|libSystem)([.]|-|$)'
 elif [[ "$os" == MINGW* || "$os" == MSYS* || "$os" == CYGWIN* ]]; then
-  vswhere="/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
-  if [[ ! -f "$vswhere" ]]; then
-    echo "vswhere not found; cannot list DLL imports of $file" >&2
+  # Do not pipe a native Windows program into sed. Git Bash reports that
+  # as exit 157 when pipefail is on, and the script then prints nothing.
+  readobj=""
+  if [[ -n "${LIBCLANG_PATH:-}" ]]; then
+    bindir=$(cygpath -u "$LIBCLANG_PATH")
+    if [[ -f "$bindir/llvm-readobj.exe" ]]; then
+      readobj="$bindir/llvm-readobj.exe"
+    fi
+  fi
+  if [[ -z "$readobj" && -f "/c/Program Files/LLVM/bin/llvm-readobj.exe" ]]; then
+    readobj="/c/Program Files/LLVM/bin/llvm-readobj.exe"
+  fi
+  if [[ -z "$readobj" ]]; then
+    echo "llvm-readobj not found; cannot list DLL imports of $file" >&2
     exit 1
   fi
-  # sed reads the whole list. head would close the pipe early, and
-  # Git Bash then reports vswhere's SIGPIPE as exit 157 under pipefail.
-  dumpbin=$(
-    "$vswhere" -latest -products '*' \
-      -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 \
-      -find 'VC\Tools\MSVC\**\bin\Hostx64\x64\dumpbin.exe' \
-      | sed -n '1p'
-  )
-  if [[ -z "$dumpbin" || ! -f "$dumpbin" ]]; then
-    echo "dumpbin not found; cannot list DLL imports of $file" >&2
+  imports=$(mktemp)
+  set +e
+  "$readobj" --coff-imports "$file" >"$imports"
+  status=$?
+  set -e
+  deps=$(sed -n 's/^[[:space:]]*Name:[[:space:]]*\(.*\.[Dd][Ll][Ll]\)[[:space:]]*$/\1/p' "$imports")
+  if [[ -z "$deps" ]]; then
+    echo "llvm-readobj status $status produced no DLL imports for $file" >&2
+    cat "$imports" >&2
+    rm -f "$imports"
     exit 1
   fi
-  deps=$("$dumpbin" /nologo /dependents "$file" | sed -n 's/^[[:space:]]*\(.*\.dll\)[[:space:]]*$/\1/p')
+  rm -f "$imports"
   allowed='^(php8|php8ts|kernel32|kernelbase|ntdll|bcrypt|bcryptprimitives|advapi32|ws2_32|userenv|secur32|crypt32|ncrypt|vcruntime140|vcruntime140_[0-9]+|msvcp140|msvcp140_[0-9]+|concrt140|ucrtbase|api-ms-win-.+)$'
 else
   echo "unsupported OS $os" >&2
@@ -62,7 +73,7 @@ if [[ "$bad" -ne 0 ]]; then
   elif [[ "$os" == Linux ]]; then
     ldd "$file" >&2
   else
-    "$dumpbin" /nologo /dependents "$file" >&2
+    echo "$deps" >&2
   fi
   exit 1
 fi
